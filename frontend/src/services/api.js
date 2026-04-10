@@ -4,7 +4,7 @@ import performanceReviewsMockData from '../data/performanceReviews.json';
 
 // ── Axios instance ──────────────────────────────────────────────────────────
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: 'https://leave-management-system-backend-mg2o.onrender.com/api',
   timeout: 10000,
 });
 
@@ -15,22 +15,24 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// 401 → clear session and redirect to login
+// 401 → clear session and redirect to login (except for file requests)
 api.interceptors.response.use(
   (res) => res,
   (error) => {
     const isLoginRequest = error.config?.url?.includes('/auth/login');
+    const isFileRequest = error.config?.url?.includes('/uploads');
     
     if (error.response?.status === 401) {
-      if (!isLoginRequest) {
+      // Only logout for protected API routes, not for file/upload requests
+      if (!isLoginRequest && !isFileRequest) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.href = '/login';
       }
     }
     
-    // Dispatch global error event for ToastContext (except login)
-    if (!isLoginRequest) {
+    // Dispatch global error event for ToastContext (except login and file requests)
+    if (!isLoginRequest && !isFileRequest) {
       const msg = error.response?.data?.message || error.message || 'An API error occurred';
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('api-error', { detail: { message: msg } }));

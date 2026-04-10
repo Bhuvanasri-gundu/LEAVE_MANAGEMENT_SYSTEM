@@ -109,15 +109,23 @@ export default function LeaveList() {
         </div>
       )
     },
-    { 
+    {
       key: 'document', label: 'Document',
-      render: (doc, row) => doc ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <button className="btn-action btn-action--view" title="View Document" onClick={() => window.open(doc.url, '_blank')}>
-            <FiPaperclip /> View
-          </button>
-        </div>
-      ) : <span style={{ color: '#9ca3af', fontSize: '12px' }}>None</span>
+      render: (doc, row) => {
+        // Only show View button for Sick Leave with document
+        if (row.leaveType === 'Sick Leave' && doc) {
+          const fileUrl = doc.filename ? `/uploads/${doc.filename}` : doc.url;
+          return (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <button className="btn-action btn-action--view" title="View Document" onClick={() => window.open(fileUrl, '_blank')}>
+                <FiPaperclip /> View
+              </button>
+            </div>
+          );
+        }
+        // For all other cases, show "None"
+        return <span style={{ color: '#9ca3af', fontSize: '12px' }}>None</span>;
+      }
     },
     {
       key: 'managerComment', label: 'Manager Comment',

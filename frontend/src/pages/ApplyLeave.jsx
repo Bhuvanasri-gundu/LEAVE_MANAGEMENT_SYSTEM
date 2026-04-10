@@ -67,9 +67,9 @@ export default function ApplyLeave() {
     if (!form.leaveType || !form.fromDate || !form.toDate) return;
     if (docError) return;
 
-    // Require document for sick leave
+    // Require document only for Sick Leave
     if (form.leaveType === 'Sick Leave' && !document) {
-      setDocError('Document upload is required for Medical/Sick leave.');
+      setDocError('Document upload is required for Sick leave.');
       return;
     }
 
@@ -183,7 +183,7 @@ export default function ApplyLeave() {
             <span className="duration-value">{calculateDuration()} day(s)</span>
           </div>
 
-          {(form.leaveType === 'Sick Leave' || form.leaveType === 'Medical Leave') && (
+          {form.leaveType === 'Sick Leave' && (
             <div className="form-row" style={{ marginTop: '16px' }}>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
                 Medical Document <span style={{ color: '#ef4444' }}>*</span>
