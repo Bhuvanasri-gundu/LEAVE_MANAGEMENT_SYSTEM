@@ -4,7 +4,7 @@ import performanceReviewsMockData from '../data/performanceReviews.json';
 
 // ── Axios instance ──────────────────────────────────────────────────────────
 const api = axios.create({
-  baseURL: 'https://leave-management-system-backend-mg2o.onrender.com/api',
+  baseURL: import.meta.env.VITE_API_URL + '/api',
   timeout: 10000,
 });
 
