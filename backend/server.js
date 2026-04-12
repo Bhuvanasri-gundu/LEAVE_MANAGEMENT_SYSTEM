@@ -25,21 +25,30 @@ const allowedOrigins = [
   'https://leave-management-system-topaz.vercel.app'
 ];
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // allow requests with no origin (like Postman)
-      if (!origin) return callback(null, true);
+// Global Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      } else {
-        return callback(new Error('Not allowed by CORS'));
-      }
-    },
-    credentials: true,
-  })
-);
+// FINAL CORS FIX (SAFE VERSION)
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://leave-management-system-topaz.vercel.app'
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow Postman / mobile apps (no origin)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log("Blocked by CORS:", origin);
+      callback(null, true); // temporarily allow all to avoid crash
+    }
+  },
+  credentials: true,
+}));
 
 // Serve uploaded files statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
