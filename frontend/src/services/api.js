@@ -3,15 +3,21 @@ import timesheetsMockData from '../data/timesheets.json';
 import performanceReviewsMockData from '../data/performanceReviews.json';
 
 // ── Axios instance ──────────────────────────────────────────────────────────
+const BASE_URL = import.meta.env.VITE_API_URL || 'https://leave-management-system-backend-mg2o.onrender.com';
+console.log('🔌 API BASE_URL:', BASE_URL);
+console.log('🔌 Environment VITE_API_URL:', import.meta.env.VITE_API_URL);
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL + '/api',
+  baseURL: BASE_URL + '/api',
   timeout: 10000,
 });
+
 
 // Attach JWT to every request
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
+  console.log('📤 API Request:', config.method?.toUpperCase(), config.baseURL + config.url);
   return config;
 });
 
@@ -21,6 +27,14 @@ api.interceptors.response.use(
   (error) => {
     const isLoginRequest = error.config?.url?.includes('/auth/login');
     const isFileRequest = error.config?.url?.includes('/uploads');
+    
+    // Enhanced error logging
+    console.error('❌ API Error:', {
+      status: error.response?.status,
+      url: error.config?.url,
+      message: error.response?.data?.message || error.message,
+      data: error.response?.data,
+    });
     
     if (error.response?.status === 401) {
       // Only logout for protected API routes, not for file/upload requests
