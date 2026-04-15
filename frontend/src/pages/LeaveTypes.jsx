@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Card from '../components/Card';
 import Table from '../components/Table';
 import { getLeaveTypes, addLeaveType } from '../services/api';
@@ -15,7 +15,7 @@ export default function LeaveTypes() {
   const [form, setForm] = useState({ name: '', daysPerYear: '', situational: false });
   const [formError, setFormError] = useState('');
 
-  const fetchLeaveTypes = async () => {
+  const fetchLeaveTypes = useCallback(async () => {
     try {
       setLoading(true);
       const res = await getLeaveTypes();
@@ -27,11 +27,11 @@ export default function LeaveTypes() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [addToast]);
 
   useEffect(() => {
     fetchLeaveTypes();
-  }, []);
+  }, [fetchLeaveTypes]);
 
   const handleAddClick = () => {
     setForm({ name: '', daysPerYear: '', situational: false });

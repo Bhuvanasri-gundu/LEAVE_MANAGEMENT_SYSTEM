@@ -57,7 +57,7 @@ export default function LeaveList() {
   const handleConfirmAction = async () => {
     const { leaveId, action, comment } = commentModal;
     const status = action === 'approve' ? 'Approved' : 'Rejected';
-    
+
     setProcessing(true);
     try {
       await updateLeaveStatus(leaveId, status, comment);
@@ -102,9 +102,9 @@ export default function LeaveList() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <span className={`status-badge status-badge--${val.toLowerCase().replace(' ', '-')}`}>{val}</span>
           {row.documentStatus && row.documentStatus !== 'None' && (
-             <span className={`status-badge status-badge--${row.documentStatus.toLowerCase()}`} style={{ fontSize: '10px' }}>
-               Doc: {row.documentStatus}
-             </span>
+            <span className={`status-badge status-badge--${row.documentStatus.toLowerCase()}`} style={{ fontSize: '10px' }}>
+              Doc: {row.documentStatus}
+            </span>
           )}
         </div>
       )

@@ -7,7 +7,7 @@ import { useNotifications } from '../context/NotificationContext';
 import Card from '../components/Card';
 import { getEmployees } from '../services/api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { FiClock, FiAlertCircle, FiUsers, FiCheck, FiX, FiCalendar, FiCheckCircle, FiXCircle } from 'react-icons/fi';
+import { FiClock, FiAlertCircle, FiUsers, FiCheck, FiX, FiCheckCircle, FiXCircle, FiPaperclip } from 'react-icons/fi';
 import './Dashboard.css';
 
 // Mock team data — members supervised by the logged-in manager
@@ -23,13 +23,14 @@ const teamAttendanceData = [
 
 export default function ManagerDashboard() {
   const { user } = useAuth();
-  const { leaves, updateLeaveStatus } = useLeaves();
+  const { leaves, updateLeaveStatus, updateDocumentStatus } = useLeaves();
   const { addToast } = useToast();
   const { addNotification } = useNotifications();
   const [teamEmployees, setTeamEmployees] = useState([]);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [commentModal, setCommentModal] = useState({ open: false, leaveId: null, action: '', comment: '' });
   const [processing, setProcessing] = useState(false);
+  const [docModal, setDocModal] = useState({ open: false, leaveId: null, docUrl: null });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -62,21 +63,23 @@ export default function ManagerDashboard() {
   const handleConfirmAction = async () => {
     const { leaveId, action, comment } = commentModal;
     const status = action === 'approve' ? 'Approved' : 'Rejected';
-    const leave = leaves.find((l) => l.id === leaveId);
+    const matchedLeave = leaves.find((l) => l.id === leaveId);
     
     setProcessing(true);
     await new Promise(r => setTimeout(r, 600));
     
-    updateLeaveStatus(leaveId, status, comment);
+    await updateLeaveStatus(leaveId, status, comment);
     setProcessing(false);
     setCommentModal({ open: false, leaveId: null, action: '', comment: '' });
     
     // Add notification for the employee
-    addNotification(
-      leave.employeeId,
-      action === 'approve' ? 'approve' : 'reject',
-      `Your ${leave.leaveType} request was ${action === 'approve' ? 'Approved' : 'Rejected'}`
-    );
+    if (matchedLeave) {
+      addNotification(
+        matchedLeave.employeeId,
+        action === 'approve' ? 'approve' : 'reject',
+        `Your ${matchedLeave.leaveType} request was ${action === 'approve' ? 'Approved' : 'Rejected'}`
+      );
+    }
 
     addToast(
       action === 'approve'
@@ -84,6 +87,25 @@ export default function ManagerDashboard() {
         : `Leave Rejected ❌`,
       action === 'approve' ? 'success' : 'error'
     );
+  };
+
+  const openDocModal = (leaveId, docUrl) => {
+    window.open(docUrl, '_blank');
+    setDocModal({ open: true, leaveId, docUrl });
+  };
+
+  const handleVerifyDocument = async (action) => {
+    try {
+      await updateDocumentStatus(docModal.leaveId, action);
+      addToast(
+        `Document ${action === 'Verified' ? 'Verified ✅' : 'Rejected ❌'}`,
+        action === 'Verified' ? 'success' : 'error'
+      );
+    } catch (err) {
+      addToast(err.response?.data?.message || 'Document action failed', 'error');
+    } finally {
+      setDocModal({ open: false, leaveId: null, docUrl: null });
+    }
   };
 
   const recentRequests = teamLeaves
@@ -156,6 +178,24 @@ export default function ManagerDashboard() {
                   <div className="leave-today__info">
                     <span className="leave-today__name">{leave.employeeName}</span>
                     <span className="leave-today__type">{leave.leaveType} · {leave.fromDate} — {leave.toDate} · {leave.duration} day(s)</span>
+                    {leave.leaveType === 'Sick Leave' && leave.document && leave.document.url && (
+                      <button
+                        onClick={() => openDocModal(leave.id, leave.document.url)}
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: '4px',
+                          background: 'none', border: 'none', color: '#3b82f6',
+                          fontSize: '12px', cursor: 'pointer', padding: '2px 0', marginTop: '2px',
+                          textDecoration: 'underline',
+                        }}
+                      >
+                        <FiPaperclip size={12} /> View Document
+                        {leave.documentStatus && leave.documentStatus !== 'None' && (
+                          <span className={`status-badge status-badge--${leave.documentStatus.toLowerCase()}`} style={{ fontSize: '10px', marginLeft: '6px' }}>
+                            {leave.documentStatus}
+                          </span>
+                        )}
+                      </button>
+                    )}
                   </div>
                   <div className="leave-today__actions" style={{ display: 'flex', gap: '8px' }}>
                     <button
@@ -301,6 +341,41 @@ export default function ManagerDashboard() {
                 disabled={processing}
               >
                 {processing ? <span className="spinner--small" /> : (commentModal.action === 'approve' ? 'Confirm Approval' : 'Confirm Rejection')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Document View Modal — Verify / Reject */}
+      {docModal.open && (
+        <div className="modal-overlay" onClick={() => setDocModal({ open: false, leaveId: null, docUrl: null })}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <h3 className="modal-card__title" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <FiPaperclip style={{ color: '#3b82f6' }} />
+              Verify Document
+            </h3>
+            <p className="modal-card__subtitle">
+              The document has been opened in a new tab. Please review it and take action below.
+            </p>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                className="btn btn--secondary"
+                onClick={() => setDocModal({ open: false, leaveId: null, docUrl: null })}
+              >
+                Close
+              </button>
+              <button
+                className="btn-reject"
+                onClick={() => handleVerifyDocument('Rejected')}
+              >
+                <FiX /> Reject Doc
+              </button>
+              <button
+                className="btn-approve"
+                onClick={() => handleVerifyDocument('Verified')}
+              >
+                <FiCheck /> Verify Doc
               </button>
             </div>
           </div>
