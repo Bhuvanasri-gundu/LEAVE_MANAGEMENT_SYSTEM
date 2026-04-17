@@ -1,0 +1,12 @@
+mongodb tlas password: gIgbKDHwtRdmp7OP
+
+
+mongodb://bhuvana:gIgbKDHwtRdmp7OP@ac-rtqxl1t-shard-00-00.mzzojmc.mongodb.net:27017,ac-rtqxl1t-shard-00-01.mzzojmc.mongodb.net:27017,ac-rtqxl1t-shard-00-02.mzzojmc.mongodb.net:27017/?ssl=true&replicaSet=atlas-44sbmm-shard-0&authSource=admin&appName=Cluster0
+
+
+
+render-> https://leave-management-system-backend-mg2o.onrender.com
+
+https://leave-management-system-backend-mg2o.onrender.com/api/health --> starts backend
+
+vercel-> leave-management-system-topaz.vercel.app
