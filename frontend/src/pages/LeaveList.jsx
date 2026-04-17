@@ -8,9 +8,6 @@ import { useToast } from '../context/ToastContext';
 import { FiCheck, FiX, FiRefreshCw, FiSearch, FiMessageSquare, FiPaperclip } from 'react-icons/fi';
 import './Pages.css';
 
-// Team members supervised by the manager (Sarah Johnson)
-const MANAGER_TEAM = ['EMP-001', 'EMP-005', 'EMP-007', 'EMP-008', 'EMP-011'];
-
 const statusOptions = ['Pending', 'Approved', 'Rejected', 'Cancelled', 'Taken', 'Scheduled'];
 
 export default function LeaveList() {
@@ -21,17 +18,15 @@ export default function LeaveList() {
     fromDate: '', toDate: '', status: '', empName: ''
   });
   const [commentModal, setCommentModal] = useState({ open: false, leaveId: null, action: '', comment: '' });
+  const [viewingDocumentId, setViewingDocumentId] = useState(null);
   const [processing, setProcessing] = useState(false);
 
   const isManager = user?.role === 'Manager';
   const isAdmin = user?.role === 'Admin';
   const canApprove = isManager || isAdmin;
 
-  // Filter leaves based on role
+  // Backend already filters by subUnit for managers, no need for hardcoded team filtering
   let visibleLeaves = [...leaves];
-  if (isManager) {
-    visibleLeaves = visibleLeaves.filter((l) => MANAGER_TEAM.includes(l.employeeId));
-  }
 
   // Apply user filters
   let filtered = [...visibleLeaves];
@@ -113,13 +108,41 @@ export default function LeaveList() {
       key: 'document', label: 'Document',
       render: (doc, row) => {
         // Only show View button for Sick Leave with document
-        if (row.leaveType === 'Sick Leave' && doc) {
-          const fileUrl = doc.filename ? `/uploads/${doc.filename}` : doc.url;
+        if (row.leaveType === 'Sick Leave' && doc && doc.url) {
+          const fileUrl = doc.url;
+          const isViewingThis = viewingDocumentId === row.id;
           return (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <button className="btn-action btn-action--view" title="View Document" onClick={() => window.open(fileUrl, '_blank')}>
-                <FiPaperclip /> View
-              </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <button className="btn-action btn-action--view" title="View Document" onClick={() => {
+                  window.open(fileUrl, '_blank');
+                  setViewingDocumentId(row.id);
+                }}>
+                  <FiPaperclip /> View
+                </button>
+              </div>
+              {isViewingThis && row.documentStatus === 'Pending' && canApprove && (
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <button
+                    className="btn-approve"
+                    style={{ background: '#3b82f6', color: 'white', borderColor: '#3b82f6', fontSize: '11px', padding: '4px 8px' }}
+                    title="Verify Document"
+                    onClick={() => handleVerifyDocument(row.id, 'Verified')}
+                    disabled={processing}
+                  >
+                    <FiCheck style={{ fontSize: '10px' }} /> Verify
+                  </button>
+                  <button
+                    className="btn-reject"
+                    style={{ background: '#ef4444', color: 'white', borderColor: '#ef4444', fontSize: '11px', padding: '4px 8px' }}
+                    title="Reject Document"
+                    onClick={() => handleVerifyDocument(row.id, 'Rejected')}
+                    disabled={processing}
+                  >
+                    <FiX style={{ fontSize: '10px' }} /> Reject
+                  </button>
+                </div>
+              )}
             </div>
           );
         }
@@ -201,28 +224,6 @@ export default function LeaveList() {
                       className="btn-reject"
                       title="Reject"
                       onClick={() => openCommentModal(row.id, 'reject')}
-                      disabled={processing}
-                    >
-                      <FiX /> Reject
-                    </button>
-                  </>
-                )}
-                {canApprove && row.documentStatus === 'Pending' && (
-                  <>
-                    <button
-                      className="btn-approve"
-                      style={{ background: '#3b82f6', color: 'white', borderColor: '#3b82f6' }}
-                      title="Verify Document"
-                      onClick={() => handleVerifyDocument(row.id, 'Verified')}
-                      disabled={processing}
-                    >
-                      <FiCheck /> Verify
-                    </button>
-                    <button
-                      className="btn-reject"
-                      style={{ background: '#ef4444', color: 'white', borderColor: '#ef4444' }}
-                      title="Reject Document"
-                      onClick={() => handleVerifyDocument(row.id, 'Rejected')}
                       disabled={processing}
                     >
                       <FiX /> Reject

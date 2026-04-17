@@ -21,20 +21,33 @@ app.use(express.urlencoded({ extended: true }));
 
 // CORS Configuration
 const allowedOrigins = [
-  'http://localhost:5173',
-  'https://leave-management-system-topaz.vercel.app'
+  'http://localhost:5173', // Local development
+  'http://localhost:5174', // Local development (alternative port)
+  'https://leave-management-system-topaz.vercel.app', // Production frontend
 ];
+
+// Add environment-based origins
+if (process.env.NODE_ENV === 'production') {
+  // In production, only allow configured URLs
+} else {
+  // In development, add more flexible origins if needed
+}
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow Postman / mobile apps (no origin)
+    // Allow Postman / mobile apps / same-origin (no origin header)
     if (!origin) return callback(null, true);
 
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      console.log("Blocked by CORS:", origin);
-      callback(null, true); // temporarily allow all to avoid crash
+      console.log("⚠️  Blocked by CORS:", origin);
+      // In development, still allow to avoid blocking during testing
+      if (process.env.NODE_ENV !== 'production') {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
     }
   },
   credentials: true,

@@ -13,9 +13,10 @@ exports.applyLeave = async (req, res) => {
     let documentStatus = 'None';
 
     if (req.file) {
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
       documentData = {
         originalName: req.file.originalname,
-        url: `/uploads/${req.file.filename}`,
+        url: `${baseUrl}/uploads/${req.file.filename}`,
       };
       documentStatus = 'Pending';
     }
@@ -67,11 +68,8 @@ exports.getLeaves = async (req, res) => {
 
     if (user.role === 'Employee') {
       query.employee = user._id;
-    } else if (user.role === 'Manager') {
-      // Managers see leaves from employees in their same subUnit (department)
-      query.subUnit = user.subUnit || user.department || 'Engineering';
     }
-    // Admin: no filter (sees all)
+    // Manager and Admin: see all leaves (no filter)
 
     const leaves = await Leave.find(query).sort({ appliedDate: -1 });
 
